@@ -71,7 +71,7 @@ class TodoApp {
                 const isDateMatch = !todo.scheduledDate || todo.scheduledDate === currentDate;
                 
                 if (isTimeMatch && isDateMatch && !todo.completed && !todo.reminded) {
-                    this.showNotification(`Reminder: ${todo.text}`);
+                    this.showNotification(`⏰ Reminder: ${todo.text}`);
                     todo.reminded = true;
                     this.saveToLocalStorage();
                 }
@@ -84,19 +84,19 @@ class TodoApp {
     showNotification(message) {
         if ('Notification' in window) {
             if (Notification.permission === 'granted') {
-                new Notification('📝 Todo Reminder', { 
+                new Notification('📋 Todo Reminder', { 
                     body: message,
-                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">✓</text></svg>'
+                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">✅</text></svg>'
                 });
             } else if (Notification.permission !== 'denied') {
                 Notification.requestPermission().then(permission => {
                     if (permission === 'granted') {
-                        new Notification('📝 Todo Reminder', { body: message });
+                        new Notification('📋 Todo Reminder', { body: message });
                     }
                 });
             }
         } else {
-            alert(`⏰ Reminder: ${message}`);
+            alert(message);
         }
     }
 
@@ -112,12 +112,12 @@ class TodoApp {
         }
 
         if (text.length > 200) {
-            alert('Task is too long (max 200 characters)');
+            alert('⚠️ Task is too long (max 200 characters)');
             return;
         }
 
         if (time && !date) {
-            alert('⏰ Please select a date when setting a time reminder');
+            alert('📅 Please select a date when setting a time reminder');
             return;
         }
 
@@ -219,7 +219,7 @@ class TodoApp {
         if (filteredTodos.length === 0) {
             this.todoList.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-state-icon">📝</div>
+                    <div class="empty-state-icon">📭</div>
                     <div class="empty-state-text">
                         ${this.searchTerm ? '🔍 No tasks match your search' : 
                           this.currentFilter === 'all' ? '✨ No tasks yet. Add one to get started!' : 
@@ -282,7 +282,7 @@ class TodoApp {
                     </div>
                 </div>
                 <div class="todo-buttons">
-                    <button class="btn todo-delete" data-id="${todo.id}">Delete</button>
+                    <button class="btn todo-delete" data-id="${todo.id}">🗑️ Delete</button>
                 </div>
             </li>
         `;
