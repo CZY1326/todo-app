@@ -9,15 +9,26 @@
 <body>
     <div class="container">
         <div class="todo-app">
-            <h1>My Todo List</h1>
+            <div class="header">
+                <h1>My Todo List</h1>
+                <div class="current-time" id="currentTime">00:00:00</div>
+            </div>
             
             <div class="input-section">
-                <input 
-                    type="text" 
-                    id="todoInput" 
-                    placeholder="Add a new task..." 
-                    class="todo-input"
-                >
+                <div class="time-input-wrapper">
+                    <input 
+                        type="text" 
+                        id="todoInput" 
+                        placeholder="Add a new task..." 
+                        class="todo-input"
+                    >
+                    <input 
+                        type="time" 
+                        id="todoTime" 
+                        class="time-picker"
+                        title="Set task reminder time"
+                    >
+                </div>
                 <button id="addBtn" class="add-btn">Add Task</button>
             </div>
 
@@ -25,13 +36,32 @@
                 <button class="filter-btn active" data-filter="all">All</button>
                 <button class="filter-btn" data-filter="active">Active</button>
                 <button class="filter-btn" data-filter="completed">Completed</button>
+                <button class="filter-btn" data-filter="scheduled">Scheduled</button>
+            </div>
+
+            <div class="search-section">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search tasks..." 
+                    class="search-input"
+                >
             </div>
 
             <ul id="todoList" class="todo-list"></ul>
 
             <div class="stats-section">
-                <span id="taskCount" class="task-count">0 tasks</span>
+                <div class="stats-info">
+                    <span id="taskCount" class="task-count">0 tasks</span>
+                    <span id="completionRate" class="completion-rate">0% complete</span>
+                </div>
                 <button id="clearBtn" class="clear-btn">Clear Completed</button>
+            </div>
+
+            <div class="export-section">
+                <button id="exportBtn" class="export-btn">📥 Export</button>
+                <button id="importBtn" class="import-btn">📤 Import</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;">
             </div>
         </div>
     </div>
