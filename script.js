@@ -22,7 +22,7 @@ class TodoApp {
         this.todoTime = document.getElementById('todoTime');
         this.addBtn = document.getElementById('addBtn');
         this.todoList = document.getElementById('todoList');
-        this.filterBtns = document.querySelectorAll('.filter-btn');
+        this.filterBtns = document.querySelectorAll('.btn-filter');
         this.taskCount = document.getElementById('taskCount');
         this.clearBtn = document.getElementById('clearBtn');
         this.currentTimeDisplay = document.getElementById('currentTime');
@@ -78,7 +78,7 @@ class TodoApp {
             });
         };
         checkReminders();
-        setInterval(checkReminders, 60000); // Check every minute
+        setInterval(checkReminders, 60000);
     }
 
     showNotification(message) {
@@ -96,8 +96,7 @@ class TodoApp {
                 });
             }
         } else {
-            // Fallback for browsers without notification support
-            alert(`Reminder: ${message}`);
+            alert(`⏰ Reminder: ${message}`);
         }
     }
 
@@ -107,7 +106,7 @@ class TodoApp {
         const time = this.todoTime.value;
         
         if (text === '') {
-            alert('Please enter a task!');
+            alert('📝 Please enter a task!');
             this.todoInput.focus();
             return;
         }
@@ -118,7 +117,7 @@ class TodoApp {
         }
 
         if (time && !date) {
-            alert('Please select a date when setting a time reminder');
+            alert('⏰ Please select a date when setting a time reminder');
             return;
         }
 
@@ -136,7 +135,6 @@ class TodoApp {
         this.saveToLocalStorage();
         this.render();
         
-        // Clear inputs
         this.todoInput.value = '';
         this.todoDate.value = '';
         this.todoTime.value = '';
@@ -144,7 +142,7 @@ class TodoApp {
     }
 
     deleteTodo(id) {
-        if (confirm('Are you sure you want to delete this task?')) {
+        if (confirm('🗑️ Are you sure you want to delete this task?')) {
             this.todos = this.todos.filter(todo => todo.id !== id);
             this.saveToLocalStorage();
             this.render();
@@ -156,7 +154,7 @@ class TodoApp {
         if (todo) {
             todo.completed = !todo.completed;
             if (!todo.completed) {
-                todo.reminded = false; // Reset reminder when uncompleted
+                todo.reminded = false;
             }
             this.saveToLocalStorage();
             this.render();
@@ -180,11 +178,11 @@ class TodoApp {
         const completedCount = this.todos.filter(t => t.completed).length;
         
         if (completedCount === 0) {
-            alert('No completed tasks to clear');
+            alert('✅ No completed tasks to clear');
             return;
         }
 
-        if (confirm(`Clear ${completedCount} completed task(s)?`)) {
+        if (confirm(`🗑️ Clear ${completedCount} completed task(s)?`)) {
             this.todos = this.todos.filter(todo => !todo.completed);
             this.saveToLocalStorage();
             this.render();
@@ -194,7 +192,6 @@ class TodoApp {
     getFilteredTodos() {
         let filtered = this.todos;
 
-        // Apply filter
         switch (this.currentFilter) {
             case 'active':
                 filtered = filtered.filter(t => !t.completed);
@@ -207,7 +204,6 @@ class TodoApp {
                 break;
         }
 
-        // Apply search
         if (this.searchTerm) {
             filtered = filtered.filter(t => 
                 t.text.toLowerCase().includes(this.searchTerm)
@@ -225,9 +221,9 @@ class TodoApp {
                 <div class="empty-state">
                     <div class="empty-state-icon">📝</div>
                     <div class="empty-state-text">
-                        ${this.searchTerm ? 'No tasks match your search' : 
-                          this.currentFilter === 'all' ? 'No tasks yet. Add one to get started!' : 
-                          `No ${this.currentFilter} tasks`}
+                        ${this.searchTerm ? '🔍 No tasks match your search' : 
+                          this.currentFilter === 'all' ? '✨ No tasks yet. Add one to get started!' : 
+                          `📭 No ${this.currentFilter} tasks`}
                     </div>
                 </div>
             `;
@@ -286,7 +282,7 @@ class TodoApp {
                     </div>
                 </div>
                 <div class="todo-buttons">
-                    <button class="todo-delete" data-id="${todo.id}">Delete</button>
+                    <button class="btn todo-delete" data-id="${todo.id}">Delete</button>
                 </div>
             </li>
         `;
@@ -304,7 +300,7 @@ class TodoApp {
 
     exportTodos() {
         if (this.todos.length === 0) {
-            alert('No tasks to export');
+            alert('📂 No tasks to export');
             return;
         }
 
@@ -327,7 +323,7 @@ class TodoApp {
             try {
                 const imported = JSON.parse(e.target.result);
                 if (Array.isArray(imported)) {
-                    if (confirm(`Import ${imported.length} task(s)? This will replace your current tasks.`)) {
+                    if (confirm(`📥 Import ${imported.length} task(s)? This will replace your current tasks.`)) {
                         this.todos = imported;
                         this.saveToLocalStorage();
                         this.currentFilter = 'all';
@@ -337,13 +333,13 @@ class TodoApp {
                             btn.classList.toggle('active', btn.dataset.filter === 'all');
                         });
                         this.render();
-                        alert(`Successfully imported ${imported.length} task(s)!`);
+                        alert(`✅ Successfully imported ${imported.length} task(s)!`);
                     }
                 } else {
-                    alert('Invalid file format. Expected an array of tasks.');
+                    alert('❌ Invalid file format. Expected an array of tasks.');
                 }
             } catch (error) {
-                alert('Error reading file: ' + error.message);
+                alert('❌ Error reading file: ' + error.message);
             }
         };
         reader.readAsText(file);
@@ -371,20 +367,10 @@ class TodoApp {
     }
 }
 
-// Request notification permission on load
 if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
 }
 
-// Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     new TodoApp();
-});
-
-// Warn before leaving if there are unsaved changes
-window.addEventListener('beforeunload', (e) => {
-    const app = window.app;
-    if (app && app.todos.length > 0) {
-        // Browser will show standard message
-    }
 });
