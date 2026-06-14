@@ -18,6 +18,7 @@ class TodoApp {
 
     cacheElements() {
         this.todoInput = document.getElementById('todoInput');
+        this.todoDate = document.getElementById('todoDate');
         this.todoTime = document.getElementById('todoTime');
         this.addBtn = document.getElementById('addBtn');
         this.todoList = document.getElementById('todoList');
@@ -52,7 +53,7 @@ class TodoApp {
     startClock() {
         const updateClock = () => {
             const now = new Date();
-            const timeString = now.toLocaleTimeString();
+            const timeString = now.toLocaleTimeString('en-US', { hour12: false });
             this.currentTimeDisplay.textContent = timeString;
         };
         updateClock();
@@ -60,37 +61,64 @@ class TodoApp {
     }
 
     checkScheduledReminders() {
-        setInterval(() => {
+        const checkReminders = () => {
             const now = new Date();
             const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            const currentDate = now.toISOString().split('T')[0];
             
             this.todos.forEach(todo => {
-                if (todo.scheduledTime === currentTime && !todo.completed && !todo.reminded) {
+                const isTimeMatch = todo.scheduledTime === currentTime;
+                const isDateMatch = !todo.scheduledDate || todo.scheduledDate === currentDate;
+                
+                if (isTimeMatch && isDateMatch && !todo.completed && !todo.reminded) {
                     this.showNotification(`Reminder: ${todo.text}`);
                     todo.reminded = true;
                     this.saveToLocalStorage();
                 }
             });
-        }, 60000); // Check every minute
+        };
+        checkReminders();
+        setInterval(checkReminders, 60000); // Check every minute
     }
 
     showNotification(message) {
-        if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('Todo Reminder', { body: message });
+        if ('Notification' in window) {
+            if (Notification.permission === 'granted') {
+                new Notification('📝 Todo Reminder', { 
+                    body: message,
+                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">✓</text></svg>'
+                });
+            } else if (Notification.permission !== 'denied') {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        new Notification('📝 Todo Reminder', { body: message });
+                    }
+                });
+            }
+        } else {
+            // Fallback for browsers without notification support
+            alert(`Reminder: ${message}`);
         }
     }
 
     addTodo() {
         const text = this.todoInput.value.trim();
+        const date = this.todoDate.value;
         const time = this.todoTime.value;
         
         if (text === '') {
-            this.showError('Please enter a task');
+            alert('Please enter a task!');
+            this.todoInput.focus();
             return;
         }
 
         if (text.length > 200) {
-            this.showError('Task is too long (max 200 characters)');
+            alert('Task is too long (max 200 characters)');
+            return;
+        }
+
+        if (time && !date) {
+            alert('Please select a date when setting a time reminder');
             return;
         }
 
@@ -99,6 +127,7 @@ class TodoApp {
             text: text,
             completed: false,
             createdAt: new Date().toLocaleString(),
+            scheduledDate: date || null,
             scheduledTime: time || null,
             reminded: false
         };
@@ -106,7 +135,10 @@ class TodoApp {
         this.todos.unshift(todo);
         this.saveToLocalStorage();
         this.render();
+        
+        // Clear inputs
         this.todoInput.value = '';
+        this.todoDate.value = '';
         this.todoTime.value = '';
         this.todoInput.focus();
     }
@@ -124,7 +156,7 @@ class TodoApp {
         if (todo) {
             todo.completed = !todo.completed;
             if (!todo.completed) {
-                todo.reminded = false;
+                todo.reminded = false; // Reset reminder when uncompleted
             }
             this.saveToLocalStorage();
             this.render();
@@ -148,7 +180,7 @@ class TodoApp {
         const completedCount = this.todos.filter(t => t.completed).length;
         
         if (completedCount === 0) {
-            this.showError('No completed tasks to clear');
+            alert('No completed tasks to clear');
             return;
         }
 
@@ -171,7 +203,7 @@ class TodoApp {
                 filtered = filtered.filter(t => t.completed);
                 break;
             case 'scheduled':
-                filtered = filtered.filter(t => t.scheduledTime && !t.completed);
+                filtered = filtered.filter(t => (t.scheduledDate || t.scheduledTime) && !t.completed);
                 break;
         }
 
@@ -221,8 +253,21 @@ class TodoApp {
     }
 
     createTodoElement(todo) {
-        const isScheduled = todo.scheduledTime && !todo.completed;
+        const isScheduled = (todo.scheduledDate || todo.scheduledTime) && !todo.completed;
         const scheduledClass = isScheduled ? 'scheduled' : '';
+        
+        let timeDisplay = '';
+        if (isScheduled) {
+            if (todo.scheduledDate && todo.scheduledTime) {
+                timeDisplay = `⏰ ${todo.scheduledDate} ${todo.scheduledTime}`;
+            } else if (todo.scheduledDate) {
+                timeDisplay = `📅 ${todo.scheduledDate}`;
+            } else if (todo.scheduledTime) {
+                timeDisplay = `🕐 ${todo.scheduledTime}`;
+            }
+        } else {
+            timeDisplay = `📅 ${new Date(todo.createdAt).toLocaleDateString()}`;
+        }
         
         return `
             <li class="todo-item ${todo.completed ? 'completed' : ''} ${scheduledClass}">
@@ -236,7 +281,7 @@ class TodoApp {
                     <span class="todo-text">${this.escapeHtml(todo.text)}</span>
                     <div class="todo-meta">
                         <span class="todo-time${isScheduled ? ' scheduled' : ''}">
-                            ${isScheduled ? '⏰ ' + todo.scheduledTime : '📅 ' + new Date(todo.createdAt).toLocaleDateString()}
+                            ${timeDisplay}
                         </span>
                     </div>
                 </div>
@@ -258,6 +303,11 @@ class TodoApp {
     }
 
     exportTodos() {
+        if (this.todos.length === 0) {
+            alert('No tasks to export');
+            return;
+        }
+
         const dataStr = JSON.stringify(this.todos, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(dataBlob);
@@ -277,17 +327,23 @@ class TodoApp {
             try {
                 const imported = JSON.parse(e.target.result);
                 if (Array.isArray(imported)) {
-                    if (confirm('This will replace your current tasks. Continue?')) {
+                    if (confirm(`Import ${imported.length} task(s)? This will replace your current tasks.`)) {
                         this.todos = imported;
                         this.saveToLocalStorage();
+                        this.currentFilter = 'all';
+                        this.searchTerm = '';
+                        this.searchInput.value = '';
+                        this.filterBtns.forEach(btn => {
+                            btn.classList.toggle('active', btn.dataset.filter === 'all');
+                        });
                         this.render();
-                        this.showError('Tasks imported successfully!');
+                        alert(`Successfully imported ${imported.length} task(s)!`);
                     }
                 } else {
-                    this.showError('Invalid file format');
+                    alert('Invalid file format. Expected an array of tasks.');
                 }
             } catch (error) {
-                this.showError('Error reading file: ' + error.message);
+                alert('Error reading file: ' + error.message);
             }
         };
         reader.readAsText(file);
@@ -299,8 +355,13 @@ class TodoApp {
     }
 
     loadFromLocalStorage() {
-        const stored = localStorage.getItem('todos');
-        return stored ? JSON.parse(stored) : [];
+        try {
+            const stored = localStorage.getItem('todos');
+            return stored ? JSON.parse(stored) : [];
+        } catch (error) {
+            console.error('Error loading from localStorage:', error);
+            return [];
+        }
     }
 
     escapeHtml(text) {
@@ -308,13 +369,9 @@ class TodoApp {
         div.textContent = text;
         return div.innerHTML;
     }
-
-    showError(message) {
-        alert(message);
-    }
 }
 
-// Request notification permission
+// Request notification permission on load
 if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
 }
@@ -322,4 +379,12 @@ if ('Notification' in window && Notification.permission === 'default') {
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     new TodoApp();
+});
+
+// Warn before leaving if there are unsaved changes
+window.addEventListener('beforeunload', (e) => {
+    const app = window.app;
+    if (app && app.todos.length > 0) {
+        // Browser will show standard message
+    }
 });

@@ -15,12 +15,19 @@
             </div>
             
             <div class="input-section">
-                <div class="time-input-wrapper">
+                <input 
+                    type="text" 
+                    id="todoInput" 
+                    placeholder="Add a new task..." 
+                    class="todo-input"
+                    autocomplete="off"
+                >
+                <div class="time-controls">
                     <input 
-                        type="text" 
-                        id="todoInput" 
-                        placeholder="Add a new task..." 
-                        class="todo-input"
+                        type="date" 
+                        id="todoDate" 
+                        class="date-picker"
+                        title="Set task date"
                     >
                     <input 
                         type="time" 
@@ -45,6 +52,7 @@
                     id="searchInput" 
                     placeholder="Search tasks..." 
                     class="search-input"
+                    autocomplete="off"
                 >
             </div>
 
